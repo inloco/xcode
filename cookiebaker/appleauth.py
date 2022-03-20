@@ -19,13 +19,13 @@ class AppleAuth:
         }
 
         r = self.session.post(f'{self.base_url}/auth/signin', json=body)
-        if r.status_code != 409:
-            r.raise_for_status()
 
         self.session.headers.update({
             'X-Apple-ID-Session-Id': r.headers['X-Apple-ID-Session-Id'],
             'scnt': r.headers['scnt'],
         })
+
+        r.raise_for_status()
 
         return r.json()
 

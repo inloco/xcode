@@ -37,6 +37,20 @@ class Authenticator:
     def __authenticate(session, auth_service_url, auth_service_key):
         apple_auth = AppleAuth(auth_service_key, auth_service_url, session)
 
+        try:
+            Authenticator.__sfa(apple_auth)
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code != 409:
+                raise e
+
+            Authenticator.__mfa(apple_auth)
+
+    @staticmethod
+    def __sfa(apple_auth):
+        apple_auth.post_auth_signin(Config.appleid_user, Config.appleid_pass)
+
+    @staticmethod
+    def __mfa(apple_auth):
         push_mode, phone_number_id = Authenticator.__request_call(apple_auth)
 
         time.sleep(15)
@@ -51,8 +65,6 @@ class Authenticator:
 
     @staticmethod
     def __request_call(apple_auth):
-        apple_auth.post_auth_signin(Config.appleid_user, Config.appleid_pass)
-
         auth = apple_auth.get_auth()
         trusted_phone_numbers = auth['trustedPhoneNumbers']
         trusted_phone_numbers = filter(lambda e: e['pushMode'] == 'voice', trusted_phone_numbers)
