@@ -82,8 +82,7 @@ class Authenticator:
 
         while True:
             calls = messagebird.get_calls()
-            calls = filter(lambda e: e['source'] == Config.messagebird_caller and e[
-                'destination'] == Config.messagebird_callee, calls)
+            calls = filter(lambda e: e['source'] == Config.messagebird_caller and e['destination'] == Config.messagebird_callee, calls)
             call = next(calls)
             call_id = call['id']
             call_status = call['status']
@@ -97,6 +96,10 @@ class Authenticator:
             leg_id = leg['id']
 
             recordings = messagebird.get_recordings(call_id, leg_id)
+
+            if len(recordings) < 1:
+                continue
+
             recording = recordings[0]
             recording_id = recording['id']
             recording_format = recording['format']
