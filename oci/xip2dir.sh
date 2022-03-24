@@ -1,20 +1,19 @@
 #!/bin/sh
 set -ex
 
-function realpath {
-	printf '%s\n' "$(cd -P -- "$(dirname -- "${1}")" && pwd -P)/$(basename -- "${1}")"
-}
-
-XIPPATH="$(realpath "${1}")"
-XIPNAME="$(basename "${XIPPATH}")"
-XIPSIZE="$(stat -f '%z' "${XIPPATH}")"
-XIPSHA256="$(shasum -a 256 "${XIPPATH}" | awk '{ print $1 }')"
-
 TMPDIR="$(mktemp -d)"
 
-echo 'Directory Transport Version: 1.1' > "${TMPDIR}/version"
+XIPPATH="$(realpath "${1}")"
+XIPBASE="$(basename "${XIPPATH}")"
+XIPDIR="$(dirname "${XIPPATH}")"
 
-ln -s "${XIPPATH}" "${TMPDIR}/${XIPSHA256}"
+TGZPATH="${TMPDIR}/${XIPBASE}.tgz"
+tar --numeric-owner --owner 0 --group 0 --mode 0644 --mtime 1970-01-01T00:00:00Z -cv -f "${TGZPATH}" -I 'gzip -1n' -H pax -C "${XIPDIR}" "${XIPBASE}"
+TGZSIZE="$(stat -c '%s' "${TGZPATH}")"
+TGZSHA256="$(shasum -a 256 "${TGZPATH}" | awk '{ print $1 }')"
+mv "${TGZPATH}" "${TMPDIR}/${TGZSHA256}"
+
+echo 'Directory Transport Version: 1.1' > "${TMPDIR}/version"
 
 CONFIGPATH="${TMPDIR}/config.json"
 cat << EOF > "${CONFIGPATH}"
@@ -24,12 +23,12 @@ cat << EOF > "${CONFIGPATH}"
   "rootfs": {
     "type": "layers",
     "diff_ids": [
-      "sha256:${XIPSHA256}"
+      "sha256:${TGZSHA256}"
     ]
   }
 }
 EOF
-CONFIGSIZE="$(stat -f '%z' "${CONFIGPATH}")"
+CONFIGSIZE="$(stat -c '%s' "${CONFIGPATH}")"
 CONFIGSHA256="$(shasum -a 256 "${CONFIGPATH}" | awk '{ print $1 }')"
 mv "${CONFIGPATH}" "${TMPDIR}/${CONFIGSHA256}"
 
@@ -43,11 +42,11 @@ cat << EOF > "${TMPDIR}/manifest.json"
   },
   "layers": [
     {
-      "mediaType": "application/vnd.oci.image.layer.v1.xip",
-      "digest": "sha256:${XIPSHA256}",
-      "size": ${XIPSIZE},
+      "mediaType": "application/vnd.oci.image.layer.v1.tar+gzip",
+      "digest": "sha256:${TGZSHA256}",
+      "size": ${TGZSIZE},
       "annotations": {
-        "org.opencontainers.image.title": "${XIPNAME}"
+        "org.opencontainers.image.title": "${OCITIT}"
       }
     }
   ],
@@ -56,7 +55,7 @@ cat << EOF > "${TMPDIR}/manifest.json"
     "org.opencontainers.image.revision": "${OCIREV}",
     "org.opencontainers.image.title": "${OCITIT}",
     "org.opencontainers.image.url": "${OCIURL}",
-    "org.opencontainers.image.version": "${OCIDES}"
+    "org.opencontainers.image.version": "${OCIVER}"
   }
 }
 EOF

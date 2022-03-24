@@ -1,0 +1,147 @@
+name: Continuous
+on:
+  push:
+    branches:
+      - master
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+jobs:
+  pre:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v2
+      - name: setup go
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.17'
+      - name: setup python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+      - name: aws configure
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/xcode
+      - name: install and setup dependencies
+        run: |
+          sudo cp ./hack/unttify.py /usr/local/bin/unttify
+          sudo sh ./hack/unttify.sh skopeo
+          sudo sh ./hack/debian-install-xar-devel.sh
+          pipx install pipenv
+      - name: build matrix
+        id: build-matrix
+        run: |
+          wget https://xcodereleases.com/data.json
+          jq -c '{ include: map(select((.version.build != "8E1000a") and (.version.release.gm or .version.release.release) and (.links.download.url // "" | endswith(".xip"))) | { name, version: .version.number, build: .version.build, url: .links.download.url }) }' data.json > matrix.json
+          echo "::set-output name=matrix::$(cat matrix.json)"
+      - name: build xipverifier
+        run: make xv
+      - name: upload xipverifier
+        uses: actions/upload-artifact@v3
+        with:
+          name: xv
+          path: xv
+      - name: bake cookies
+        run: make cookies.txt
+        env:
+          APPLEID_USER: ${{ secrets.APPLEID_USER }}
+          APPLEID_PASS: ${{ secrets.APPLEID_PASS }}
+          AWSS3_BUCKETNAME: ${{ secrets.AWSS3_BUCKETNAME }}
+          MESSAGEBIRD_ACCESSKEY: ${{ secrets.MESSAGEBIRD_ACCESSKEY }}
+          MESSAGEBIRD_CALLER: ${{ secrets.MESSAGEBIRD_CALLER }}
+          MESSAGEBIRD_CALLEE: ${{ secrets.MESSAGEBIRD_CALLEE }}
+      - name: encrypt cookies
+        run: gpg --batch --no-tty --passphrase '${{ secrets.GPG_PASSPHRASE }}' -o cookies.txt.gpg -c cookies.txt
+      - name: upload cookies
+        uses: actions/upload-artifact@v3
+        with:
+          name: cookies.txt.gpg
+          path: cookies.txt.gpg
+  make:
+    runs-on: ubuntu-latest
+    needs: pre
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.pre.outputs.matrix) }}
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      XDG_RUNTIME_DIR: /tmp
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v2
+      - name: aws configure
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT }}:role/xcode
+      - name: download xipverifier
+        uses: actions/download-artifact@v3
+        with:
+          name: xv
+      - name: install and setup dependencies
+        run: |
+          sudo cp ./hack/unttify.py /usr/local/bin/unttify
+          sudo sh ./hack/unttify.sh aria2c
+          sudo sh ./hack/unttify.sh skopeo
+          sudo sh ./hack/apple-pki.sh
+          sudo sh ./hack/debian-install-xar-devel.sh
+          sudo cp ./xv /usr/local/bin/xipverifier
+          sudo chmod +x /usr/local/bin/xipverifier
+      - name: docker login
+        run: |
+          # skopeo login -u '${{ secrets.DOCKER_USER }}' -p '${{ secrets.DOCKER_PASS }}' docker.io
+          skopeo login -u '${{ github.actor }}' -p '${{ github.token }}' ghcr.io
+          skopeo login -u 'AWS' -p "$(aws ecr-public get-login-password)" public.ecr.aws
+      - name: docker inspect
+        id: docker-inspect
+        run: |
+          # skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://docker.io/inloco/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
+          # skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://docker.io/inloco/xcode:${{ matrix.version }}' || echo "::set-output name=needs-version::1"
+          skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://ghcr.io/inloco/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
+          skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://ghcr.io/inloco/xcode:${{ matrix.version }}' || echo "::set-output name=needs-version::1"
+          skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://public.ecr.aws/incognia/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
+          skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://public.ecr.aws/incognia/xcode:${{ matrix.version }}' || echo "::set-output name=needs-version::1"
+      - name: download cookies
+        if: ${{ steps.docker-inspect.outputs.needs-build }}
+        uses: actions/download-artifact@v3
+        with:
+          name: cookies.txt.gpg
+      - name: decrypt cookies
+        if: ${{ steps.docker-inspect.outputs.needs-build }}
+        run: gpg --batch --no-tty --passphrase '${{ secrets.GPG_PASSPHRASE }}' -o cookies.txt -d cookies.txt.gpg
+      - name: download xcode
+        if: ${{ steps.docker-inspect.outputs.needs-build }}
+        run: make 'URL=${{ matrix.url }}' Xcode.xip
+      - name: docker build
+        if: ${{ steps.docker-inspect.outputs.needs-build }}
+        run: |
+          export OCIREV='${{ matrix.build }}'
+          export OCITIT='${{ matrix.name }}'
+          export OCIURL='${{ matrix.url }}'
+          export OCIVER='${{ matrix.version }}'
+          make -C oci all
+      - name: docker push
+        if: ${{ steps.docker-inspect.outputs.needs-build }}
+        shell: '/usr/bin/env parallel --lb :::: {0}'
+        run: |
+          # make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
+          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
+          make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
+      - name: docker tag
+        if: ${{ steps.docker-inspect.outputs.needs-version }}
+        shell: '/usr/bin/env parallel --lb :::: {0}'
+        run: |
+          # make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
+          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
+          make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag

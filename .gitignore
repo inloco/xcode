@@ -152,3 +152,8 @@ cookies.txt
 
 # xipverifier
 xv
+
+# xcode
+Xcode_*.xip
+Xcode.xip
+Xcode.xip.tar
