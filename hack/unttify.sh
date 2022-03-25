@@ -11,4 +11,4 @@ cat << EOF > "${WRAPER}"
 unttify '${REAL}' "\${@}"
 EOF
 
-chmod +x "${WRAPER}"
+chmod -v +x "${WRAPER}"

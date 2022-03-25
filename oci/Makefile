@@ -19,7 +19,7 @@ all: build/manifest.json
 clean:
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 	@printf '${BLD}${YLW}$$${RST} '
-	rm -fR build/
+	rm -Rfv build/
 .PHONY: clean
 
 push:
@@ -34,7 +34,7 @@ tag:
 	skopeo copy 'docker://${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_VERSION}${IMAGE_VARIANT}' 'docker://${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}'
 .PHONY: push
 
-build/manifest.json: xip2dir.sh ../Xcode.xip
+build/manifest.json: tgz2dir.sh ../Xcode.xip.tgz
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 	@printf '${BLD}${YLW}$$${RST} '
-	./xip2dir.sh ../Xcode.xip
+	./tgz2dir.sh ../Xcode.xip.tgz

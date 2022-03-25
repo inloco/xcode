@@ -3,9 +3,9 @@ set -ex
 
 TMPDIR=$(mktemp -d)
 
-mkdir -p "${TMPDIR}/usr"
-ln -s /usr/include "${TMPDIR}/usr/include"
-ln -s /usr/lib/x86_64-linux-gnu "${TMPDIR}/usr/lib64"
+mkdir -pv "${TMPDIR}/usr"
+ln -fsv /usr/include "${TMPDIR}/usr/include"
+ln -fsv /usr/lib/x86_64-linux-gnu "${TMPDIR}/usr/lib64"
 
 for PKG in xar xar-devel
 do
@@ -14,4 +14,4 @@ do
   cpio -vmidD "${TMPDIR}" < "${TMPDIR}/${PKG}.cpio"
 done
 
-rm -fR "${TMPDIR}"
+rm -Rfv "${TMPDIR}"

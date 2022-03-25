@@ -1,19 +1,15 @@
 #!/bin/sh
 set -ex
 
-TMPDIR="$(mktemp -d)"
-
-XIPPATH="$(realpath "${1}")"
-XIPBASE="$(basename "${XIPPATH}")"
-XIPDIR="$(dirname "${XIPPATH}")"
-
-TGZPATH="${TMPDIR}/${XIPBASE}.tgz"
-tar --numeric-owner --owner 0 --group 0 --mode 0644 --mtime 1970-01-01T00:00:00Z -cv -f "${TGZPATH}" -I 'gzip -1n' -H pax -C "${XIPDIR}" "${XIPBASE}"
+TGZPATH="$(realpath "${1}")"
 TGZSIZE="$(stat -c '%s' "${TGZPATH}")"
 TGZSHA256="$(shasum -a 256 "${TGZPATH}" | awk '{ print $1 }')"
-mv "${TGZPATH}" "${TMPDIR}/${TGZSHA256}"
+
+TMPDIR="$(mktemp -d)"
 
 echo 'Directory Transport Version: 1.1' > "${TMPDIR}/version"
+
+ln -fsv "${TGZPATH}" "${TMPDIR}/${TGZSHA256}"
 
 CONFIGPATH="${TMPDIR}/config.json"
 cat << EOF > "${CONFIGPATH}"
@@ -30,7 +26,7 @@ cat << EOF > "${CONFIGPATH}"
 EOF
 CONFIGSIZE="$(stat -c '%s' "${CONFIGPATH}")"
 CONFIGSHA256="$(shasum -a 256 "${CONFIGPATH}" | awk '{ print $1 }')"
-mv "${CONFIGPATH}" "${TMPDIR}/${CONFIGSHA256}"
+mv -fv "${CONFIGPATH}" "${TMPDIR}/${CONFIGSHA256}"
 
 cat << EOF > "${TMPDIR}/manifest.json"
 {
@@ -60,5 +56,5 @@ cat << EOF > "${TMPDIR}/manifest.json"
 }
 EOF
 
-rm -fR ./build
-mv "${TMPDIR}" ./build
+rm -Rfv ./build
+mv -fv "${TMPDIR}" ./build
