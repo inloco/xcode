@@ -153,7 +153,16 @@ cookies.txt
 # xipverifier
 xv
 
+# pseudotgz
+ptgz
+
 # xcode
 Xcode_*.xip
 Xcode.xip
 Xcode.xip.tar
+Xcode.xip.tar.gz
+Xcode.xip.tgz
+
+# matrix
+data.json
+matrix.json

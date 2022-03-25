@@ -12,7 +12,7 @@ IMAGE_VERSION ?= $(shell git describe --dirty --broken --always)
 IMAGE_VARIANT ?=
 IMAGE_TAG ?= latest
 
-all: build/manifest.json
+all: build
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 .PHONY: all
 
@@ -21,6 +21,10 @@ clean:
 	@printf '${BLD}${YLW}$$${RST} '
 	rm -Rfv build/
 .PHONY: clean
+
+build: build/manifest.json
+	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
+.PHONY: build
 
 push:
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
@@ -34,7 +38,7 @@ tag:
 	skopeo copy 'docker://${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_VERSION}${IMAGE_VARIANT}' 'docker://${IMAGE_REGISTRY}/${IMAGE_REPOSITORY}:${IMAGE_TAG}'
 .PHONY: push
 
-build/manifest.json: tgz2dir.sh ../Xcode.xip.tgz
+build/manifest.json: ../Xcode.xip.tgz tgz2dir.sh
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 	@printf '${BLD}${YLW}$$${RST} '
 	./tgz2dir.sh ../Xcode.xip.tgz
