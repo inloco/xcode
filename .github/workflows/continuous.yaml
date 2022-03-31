@@ -106,7 +106,7 @@ jobs:
       - name: docker login
         run: |
           skopeo login -u '${{ secrets.DOCKERHUB_USER }}' -p '${{ secrets.DOCKERHUB_PASS }}' docker.io
-          # skopeo login -u '${{ secrets.QUAY_USER }}' -p '${{ secrets.QUAY_PASS }}' quay.io
+          skopeo login -u '${{ secrets.QUAY_USER }}' -p '${{ secrets.QUAY_PASS }}' quay.io
           skopeo login -u '${{ github.actor }}' -p '${{ github.token }}' ghcr.io
           skopeo login -u 'AWS' -p "$(aws ecr-public get-login-password)" public.ecr.aws
       - name: docker inspect
@@ -114,8 +114,8 @@ jobs:
         run: |
           skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://docker.io/inloco/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
           skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://docker.io/inloco/xcode:${{ matrix.version }}' || echo "::set-output name=needs-version::1"
-          # skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://quay.io/inloco/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
-          # skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://quay.io/inloco/xcode:${{ matrix.version }}' || echo "::set-output name=needs-version::1"
+          skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://quay.io/inloco/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
+          skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://quay.io/inloco/xcode:${{ matrix.version }}' || echo "::set-output name=needs-version::1"
           skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://ghcr.io/inloco/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
           skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://ghcr.io/inloco/xcode:${{ matrix.version }}' || echo "::set-output name=needs-version::1"
           skopeo inspect --override-os 'darwin' --override-arch 'universal' --raw 'docker://public.ecr.aws/incognia/xcode:${{ matrix.build }}' || echo "::set-output name=needs-build::1"
@@ -139,7 +139,7 @@ jobs:
         shell: '/usr/bin/env parallel --lb :::: {0}'
         run: |
           make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
-          # make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
+          make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
           make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
           make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
       - name: docker tag version
@@ -147,7 +147,7 @@ jobs:
         shell: '/usr/bin/env parallel --lb :::: {0}'
         run: |
           make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
-          # make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
+          make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
           make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
           make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
       - name: docker tag latest
@@ -155,6 +155,6 @@ jobs:
         shell: '/usr/bin/env parallel --lb :::: {0}'
         run: |
           make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
-          # make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
+          make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
           make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
           make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
