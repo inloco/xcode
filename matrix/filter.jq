@@ -14,12 +14,12 @@
                 version: .value.version.number,
                 build: .value.version.build,
                 url: .value.links.download.url,
-                latest: (
-                    .key == 0
-                ),
+                latest: false,
             }
         ) | sort_by(
             .version | split(".") | map(tonumber)
-        ) | reverse
+        ) | reverse | (
+            .[0].latest = true
+        )
     ),
 }
