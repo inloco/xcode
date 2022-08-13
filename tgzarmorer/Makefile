@@ -11,27 +11,27 @@ all: build install
 clean:
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 	@printf '${BLD}${YLW}$$${RST} '
-	rm -fv ./ptgz
+	rm -fv ./tgza
 .PHONY: clean
 
-build: ptgz
+build: tgza
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 .PHONY: build
 
-install: /usr/local/bin/pseudotgz
+install: /usr/local/bin/tgzarmorer
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 .PHONY: install
 
-ptgz:
+tgza:
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 	@printf '${BLD}${YLW}$$${RST} '
 	go get -v ./...
 	@printf '${BLD}${YLW}$$${RST} '
-	go build -o ./ptgz ./...
+	go build -o ./tgza -v ./...
 
-/usr/local/bin/pseudotgz: ptgz
+/usr/local/bin/tgzarmorer: tgza
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 	@printf '${BLD}${YLW}$$${RST} '
-	cp -fv ./ptgz /usr/local/bin/pseudotgz
+	cp -fv ./tgza /usr/local/bin/tgzarmorer
 	@printf '${BLD}${YLW}$$${RST} '
-	chmod -v +x /usr/local/bin/pseudotgz
+	chmod -v +x /usr/local/bin/tgzarmorer

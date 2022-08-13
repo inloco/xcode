@@ -44,13 +44,13 @@ jobs:
         run: |
           make -C matrix
           echo "::set-output name=matrix::$(cat ./matrix/matrix.json)"
-      - name: build pseudotgz
-        run: make -C pseudotgz build
-      - name: upload pseudotgz
+      - name: build tgzarmorer
+        run: make -C tgzarmorer build
+      - name: upload tgzarmorer
         uses: actions/upload-artifact@v3
         with:
-          name: pseudotgz
-          path: ./pseudotgz/ptgz
+          name: tgzarmorer
+          path: ./tgzarmorer/tgza
           retention-days: 1
       - name: build xipverifier
         run: make -C xipverifier build
@@ -101,7 +101,7 @@ jobs:
           sudo sh ./hack/unttify.sh skopeo
           sudo sh ./hack/apple-pki.sh
           sudo sh ./hack/debian-install-xar-devel.sh
-          sudo make -C pseudotgz install
+          sudo make -C tgzarmorer install
           sudo make -C xipverifier install
       - name: docker login
         run: |

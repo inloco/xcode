@@ -19,9 +19,9 @@ Xcode.xip: /usr/local/bin/xipverifier cookiebaker/cookies.txt
 	@printf '${BLD}${YLW}$$${RST} '
 	mv -fv Xcode_*.xip Xcode.xip
 
-Xcode.xip.tgz: /usr/local/bin/pseudotgz Xcode.xip
+Xcode.xip.tgz: /usr/local/bin/tgzarmorer Xcode.xip
 	@printf '${BLD}${RED}make: *** [$@]${RST}${EOL}'
 	@printf '${BLD}${YLW}$$${RST} '
-	pseudotgz Xcode.xip > Xcode.xip.tgz
+	tgzarmorer Xcode.xip > Xcode.xip.tgz
 	@printf '${BLD}${YLW}$$${RST} '
 	rm -fv Xcode.xip
