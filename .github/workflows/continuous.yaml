@@ -140,7 +140,7 @@ jobs:
         run: |
           make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
           make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
-          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
+          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=${{ github.repository }}' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
           make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.build }}' -C oci push
       - name: docker tag version
         if: ${{ steps.docker-inspect.outputs.needs-version }}
@@ -148,7 +148,7 @@ jobs:
         run: |
           make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
           make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
-          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
+          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=${{ github.repository }}' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
           make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.build }}' 'IMAGE_TAG=${{ matrix.version }}' -C oci tag
       - name: docker tag latest
         if: ${{ matrix.latest }}
@@ -156,5 +156,5 @@ jobs:
         run: |
           make 'IMAGE_REGISTRY=docker.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
           make 'IMAGE_REGISTRY=quay.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
-          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=inloco/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
+          make 'IMAGE_REGISTRY=ghcr.io' 'IMAGE_REPOSITORY=${{ github.repository }}' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
           make 'IMAGE_REGISTRY=public.ecr.aws' 'IMAGE_REPOSITORY=incognia/xcode' 'IMAGE_VERSION=${{ matrix.version }}' 'IMAGE_TAG=latest' -C oci tag
