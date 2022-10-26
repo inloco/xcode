@@ -1,4 +1,4 @@
-module xcode
+module github.com/inloco/xcode
 
 go 1.17
 
