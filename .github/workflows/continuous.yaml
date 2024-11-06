@@ -47,7 +47,7 @@ jobs:
       - name: build tgzarmorer
         run: make -C tgzarmorer build
       - name: upload tgzarmorer
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: tgzarmorer
           path: ./tgzarmorer/tgza
@@ -55,7 +55,7 @@ jobs:
       - name: build xipverifier
         run: make -C xipverifier build
       - name: upload xipverifier
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: xipverifier
           path: ./xipverifier/xv
@@ -70,7 +70,7 @@ jobs:
           MESSAGEBIRD_CALLER: ${{ secrets.MESSAGEBIRD_CALLER }}
           MESSAGEBIRD_CALLEE: ${{ secrets.MESSAGEBIRD_CALLEE }}
       - name: upload cookies
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cookiebaker
           path: ./cookiebaker/cookies.txt.gpg
@@ -88,7 +88,7 @@ jobs:
       - name: checkout repository
         uses: actions/checkout@v2
       - name: download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
       - name: aws configure
         uses: aws-actions/configure-aws-credentials@v1
         with:
